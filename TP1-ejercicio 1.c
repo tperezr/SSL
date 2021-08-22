@@ -4,11 +4,11 @@
 
 int verificarCaracteres(char *s);
 int isLetterHex(char c);
-int esPalabra(const char *cadena);
-int columna(int c, bool esHex, bool esDec, bool esOctal, bool signEnabled);
-void countDec(bool *esDec, int *counterDec);
-void countHex(bool *esHex, int *counterHex);
-void countOctal(bool *esOctal, int *counterOctal);
+int esPalabra(const char *string);
+int columna(int c, bool isHex, bool isDec, bool isOctal, bool signEnabled);
+void countDec(bool *isDec, int *counterDec);
+void countHex(bool *isHex, int *counterHex);
+void countOctal(bool *isOctal, int *counterOctal);
 
 int main()
 {
@@ -16,16 +16,14 @@ int main()
 	if (!verificarCaracteres(s1)) 
 	{
 		printf("Caracteres invalidos\n");
-		getchar();
 		return 0;
 	}
 	if(esPalabra(s1)){
 		printf("Pertenece al lenguaje\n");
-		getchar();
 		return 0;
 	}
 	printf("no pertenece al lenguaje\n"); 
-	getchar();
+	return 0;
 }
 
 int verificarCaracteres (char *s) {
@@ -57,31 +55,31 @@ int isLetterHex(char c){
     return 1;
 }
 
-void countDec(bool *esDec, int *counterDec){
-	if(*esDec){
+void countDec(bool *isDec, int *counterDec){
+	if(*isDec){
 		*counterDec += 1;
 	}
-	*esDec = false;
+	*isDec = false;
 }
-void countHex(bool *esHex, int *counterHex){
-	if(*esHex){
+void countHex(bool *isHex, int *counterHex){
+	if(*isHex){
 		*counterHex += 1;
 	}
-	*esHex = false;
+	*isHex = false;
 }
-void countOctal(bool *esOctal, int *counterOctal){
-	if(*esOctal){
+void countOctal(bool *isOctal, int *counterOctal){
+	if(*isOctal){
 		*counterOctal += 1;
 	}
-	*esOctal = false;
+	*isOctal = false;
 }
 
-int columna(int c, bool esHex, bool esDec, bool esOctal, bool signEnabled){
-	if(esHex && ((c >= '0' && c <= '9') || isLetterHex(c))) {
+int columna(int c, bool isHex, bool isDec, bool isOctal, bool signEnabled){
+	if(isHex && ((c >= '0' && c <= '9') || isLetterHex(c))) {
 		return 7;
-	} else if (esDec && (c >= '0' && c <= '9')) {
+	} else if (isDec && (c >= '0' && c <= '9')) {
 		return 2;
-	} else if(esOctal && (c >= '0' && c <= '7')){
+	} else if(isOctal && (c >= '0' && c <= '7')){
 		return 4;
 	} else if(signEnabled && (c >= '1' && c <= '9')){ //decimal sin 0
 		return 1;
@@ -108,7 +106,7 @@ int columna(int c, bool esHex, bool esDec, bool esOctal, bool signEnabled){
 }
 
 /* Automata 1 */
-int esPalabra(const char *cadena){
+int esPalabra(const char *string){
 	static int tt[7][10] = {{1,6,6,3,6,4,6,6,6,6},
 							{6,2,6,6,6,6,6,6,6,6},
 							{6,6,2,6,6,6,6,6,0,6},
@@ -117,24 +115,24 @@ int esPalabra(const char *cadena){
 							{6,6,6,6,6,6,6,5,0,6},
 							{6,6,6,6,6,6,6,6,6,6}};
 	int e = 0; //estado inicial
-	bool esHex = false; 
-	bool esDec = false;
-	bool esOctal = false;
+	bool isHex = false; 
+	bool isDec = false;
+	bool isOctal = false;
 	bool signEnabled = false;
 	int counterHex = 0;
 	int counterDec = 0;
 	int counterOctal = 0;
-	int c = cadena[0]; // primer caracter
+	int c = string[0]; // primer caracter
 	int s = 1; // signo
 	unsigned i = 0;
 
 	while(c != '\0'){
-		e = tt[e][columna(c,esHex,esDec,esOctal,signEnabled)];
+		e = tt[e][columna(c,isHex,isDec,isOctal,signEnabled)];
 		switch (e) {
 		case 0:
-			countDec(&esDec, &counterDec);
-			countHex(&esHex, &counterHex);
-			countOctal(&esOctal, &counterOctal);
+			countDec(&isDec, &counterDec);
+			countHex(&isHex, &counterHex);
+			countOctal(&isOctal, &counterOctal);
 			break;
 		case 1:
 			if(c == '-'){
@@ -144,13 +142,13 @@ int esPalabra(const char *cadena){
 			break;
 
 		case 2:
-			if(c >= '1' && c <= '9' && !esDec) {
-				esDec = true;
+			if(c >= '1' && c <= '9' && !isDec) {
+				isDec = true;
 				signEnabled = false;
 			}
 			break;
 		case 3:
-			if(c >= '1' && c <= '7' && !esOctal) esOctal = true;
+			if(c >= '1' && c <= '7' && !isOctal) isOctal = true;
 			break;
 
 		case 4:
@@ -158,20 +156,21 @@ int esPalabra(const char *cadena){
 			break;
 
 		case 5:
-			if((c == 'x' || c == 'X') && !esHex) esHex = true;
+			if((c == 'x' || c == 'X') && !isHex) isHex = true;
 			break;
 
 		default:
 			break;
 		}
 
-		c = cadena[++i];
+		c = string[++i];
 	}
-	countDec(&esDec, &counterDec);
-	countHex(&esHex, &counterHex);
-	countOctal(&esOctal, &counterOctal);
 
 	if(e == 3 || e == 5 || e == 2){
+		countDec(&isDec, &counterDec);
+		countHex(&isHex, &counterHex);
+		countOctal(&isOctal, &counterOctal);
+
 		printf("Cantidad de numeros decimales: %d \n",counterDec);
 		printf("Cantidad de numeros hexadecimales: %d \n",counterHex);
 		printf("Cantidad de numeros octales: %d \n",counterOctal);
@@ -180,72 +179,3 @@ int esPalabra(const char *cadena){
 
 	return 0;
 }
-
-
-
-
-/* Automata 1 
-int esPalabra(const char *cadena){
-	static int tt[7][10] = {{1,6,6,3,6,4,6,6,6,6},
-							{6,2,6,6,6,6,6,6,6,6},
-							{6,6,2,6,6,6,6,6,0,6},
-							{6,6,6,6,3,6,6,6,0,6},
-							{6,6,6,6,6,6,5,6,6,6},
-							{6,6,6,6,6,6,6,5,0,6},
-							{6,6,6,6,6,6,6,6,6,6}};
-	int e = 0; //estado inicial
-	bool esHex = false; 
-	bool esDec = false;
-	bool esOctal = false;
-	bool signEnabled = false;
-	int counterHex = 0;
-	int counterDec = 0;
-	int counterOctal = 0;
-	int c = cadena[0]; // primer caracter
-	int s = 1; // signo
-	unsigned i = 0;
-	int aux = 0;
-
-	while(c != '\0'){
-		e = tt[e][columna(c,esHex,esDec,esOctal,signEnabled)];
-		switch (e) {
-		case 0:
-			if(c == '-'){
-			 	s = -1;
-			}
-			signEnabled = true;
-			break;
-
-		case 1:
-			if(c >= '1' && c <= '9') esDec = true;
-			break;
-
-		case 2: 
-			if(c == '&') counterDec++; esDec = false;
-			break;
-
-		case 3:
-			if(c >= '1' && c <= '7' && !esOctal) esOctal = true;
-			if(c == '&') counterOctal++; esOctal = false;
-			break;
-
-		case 4:
-			aux = cadena[i+1];
-			if(c == '0' && (aux == 'x' || aux == 'X')) esHex = true;
-			break;
-
-		case 5:
-			if(c == '&') counterHex++; esHex = false;
-			break;
-			
-		default:
-			break;
-		}
-
-		c = cadena[++i];
-	}
-	printf("%d",counterDec);
-	printf("%d",counterHex);
-	printf("%d",counterOctal);
-	getchar();
-}*/

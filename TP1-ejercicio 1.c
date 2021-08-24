@@ -12,7 +12,7 @@ void countOctal(bool *isOctal, int *counterOctal);
 
 int main()
 {
-    char s1[] = "+125&154&-1";
+    char s1[] = "cadena a validar";
 	if (!verificarCaracteres(s1)) 
 	{
 		printf("Caracteres invalidos\n");
@@ -26,52 +26,71 @@ int main()
 	return 0;
 }
 
-int verificarCaracteres (char *s) {
-	unsigned i;
-	for (i=0; s[i]; i++)
-	{
-		if (!(isdigit(s[i]) 
-            || s[i] == '+' 
-			|| s[i] == '-'
-            || isLetterHex(s[i])
-			|| s[i] == '&'
-			|| s[i] == 'x'
-			|| s[i] == 'X')){
-				return 0;
+/* Automata */
+int esPalabra(const char *string){
+	static int tt[7][10] = {{1,6,6,3,6,4,6,6,6,6},
+							{6,2,6,6,6,6,6,6,6,6},
+							{6,6,2,6,6,6,6,6,0,6},
+							{6,6,6,6,3,6,6,6,0,6},
+							{6,6,6,6,6,6,5,6,6,6},
+							{6,6,6,6,6,6,6,5,0,6},
+							{6,6,6,6,6,6,6,6,6,6}};
+	int e = 0; //estado inicial
+	bool isHex = false; 
+	bool isDec = false;
+	bool isOctal = false;
+	bool signEnabled = false;
+	int counterHex = 0;
+	int counterDec = 0;
+	int counterOctal = 0;
+	int c = string[0]; // primer caracter
+	unsigned i = 0;
+
+	while(c != '\0'){
+		e = tt[e][columna(c,isHex,isDec,isOctal,signEnabled)];
+		switch (e) {
+		case 0:
+			countDec(&isDec, &counterDec);
+			countHex(&isHex, &counterHex);
+			countOctal(&isOctal, &counterOctal);
+			break;
+		case 1:
+			signEnabled = true;
+			break;
+		case 2:
+			if(c >= '1' && c <= '9' && !isDec) {
+				isDec = true;
+				signEnabled = false;
 			}
-		
-	}
-return 1;
-}
-/*Verifico si contiene caracteres hexadecimales, unicamente las letras*/
-int isLetterHex(char c){
-    c = toupper(c);
-    if(!(c == 'A' || c == 'B'
-        || c == 'C' || c == 'D'
-        || c == 'E' || c == 'F')){
-            return 0;
-        }
+			break;
+		case 3:
+			if(c >= '1' && c <= '7' && !isOctal) isOctal = true;
+			break;
+		case 4:
+			//nada para hacer
+			break;
+		case 5:
+			if((c == 'x' || c == 'X') && !isHex) isHex = true;
+			break;
+		default:
+			break;
+		}
 
-    return 1;
-}
+		c = string[++i];
+	}
 
-void countDec(bool *isDec, int *counterDec){
-	if(*isDec){
-		*counterDec += 1;
+	if(e == 2 || e == 3 || e == 5){
+		countDec(&isDec, &counterDec);
+		countHex(&isHex, &counterHex);
+		countOctal(&isOctal, &counterOctal);
+
+		printf("Cantidad de numeros decimales: %d \n",counterDec);
+		printf("Cantidad de numeros hexadecimales: %d \n",counterHex);
+		printf("Cantidad de numeros octales: %d \n",counterOctal);
+		return 1;
 	}
-	*isDec = false;
-}
-void countHex(bool *isHex, int *counterHex){
-	if(*isHex){
-		*counterHex += 1;
-	}
-	*isHex = false;
-}
-void countOctal(bool *isOctal, int *counterOctal){
-	if(*isOctal){
-		*counterOctal += 1;
-	}
-	*isOctal = false;
+
+	return 0;
 }
 
 int columna(int c, bool isHex, bool isDec, bool isOctal, bool signEnabled){
@@ -105,77 +124,51 @@ int columna(int c, bool isHex, bool isDec, bool isOctal, bool signEnabled){
 	}
 }
 
-/* Automata 1 */
-int esPalabra(const char *string){
-	static int tt[7][10] = {{1,6,6,3,6,4,6,6,6,6},
-							{6,2,6,6,6,6,6,6,6,6},
-							{6,6,2,6,6,6,6,6,0,6},
-							{6,6,6,6,3,6,6,6,0,6},
-							{6,6,6,6,6,6,5,6,6,6},
-							{6,6,6,6,6,6,6,5,0,6},
-							{6,6,6,6,6,6,6,6,6,6}};
-	int e = 0; //estado inicial
-	bool isHex = false; 
-	bool isDec = false;
-	bool isOctal = false;
-	bool signEnabled = false;
-	int counterHex = 0;
-	int counterDec = 0;
-	int counterOctal = 0;
-	int c = string[0]; // primer caracter
-	int s = 1; // signo
-	unsigned i = 0;
-
-	while(c != '\0'){
-		e = tt[e][columna(c,isHex,isDec,isOctal,signEnabled)];
-		switch (e) {
-		case 0:
-			countDec(&isDec, &counterDec);
-			countHex(&isHex, &counterHex);
-			countOctal(&isOctal, &counterOctal);
-			break;
-		case 1:
-			if(c == '-'){
-			 	s = -1;
+int verificarCaracteres (char *s) {
+	unsigned i;
+	for (i=0; s[i]; i++)
+	{
+		if(!(isdigit(s[i]) 
+            || s[i] == '+' 
+			|| s[i] == '-'
+            || isLetterHex(s[i])
+			|| s[i] == '&'
+			|| s[i] == 'x'
+			|| s[i] == 'X')){
+				return 0;
 			}
-			signEnabled = true;
-			break;
-
-		case 2:
-			if(c >= '1' && c <= '9' && !isDec) {
-				isDec = true;
-				signEnabled = false;
-			}
-			break;
-		case 3:
-			if(c >= '1' && c <= '7' && !isOctal) isOctal = true;
-			break;
-
-		case 4:
-			//nada para hacer
-			break;
-
-		case 5:
-			if((c == 'x' || c == 'X') && !isHex) isHex = true;
-			break;
-
-		default:
-			break;
-		}
-
-		c = string[++i];
+		
 	}
+return 1;
+}
 
-	if(e == 3 || e == 5 || e == 2){
-		countDec(&isDec, &counterDec);
-		countHex(&isHex, &counterHex);
-		countOctal(&isOctal, &counterOctal);
+/*Verifico si contiene caracteres hexadecimales, unicamente las letras*/
+int isLetterHex(char c){
+    c = toupper(c);
+    if(!(c == 'A' || c == 'B'
+    	|| c == 'C' || c == 'D'
+        || c == 'E' || c == 'F')){
+            return 0;
+        }
 
-		printf("Cantidad de numeros decimales: %d \n",counterDec);
-		printf("Cantidad de numeros hexadecimales: %d \n",counterHex);
-		printf("Cantidad de numeros octales: %d \n",counterOctal);
-		return 1;
+    return 1;
+}
+
+void countDec(bool *isDec, int *counterDec){
+	if(*isDec){
+		*counterDec += 1;
 	}
-
-	return 0;
+	*isDec = false;
+}
+void countHex(bool *isHex, int *counterHex){
+	if(*isHex){
+		*counterHex += 1;
+	}
+	*isHex = false;
+}
+void countOctal(bool *isOctal, int *counterOctal){
+	if(*isOctal){
+		*counterOctal += 1;
+	}
+	*isOctal = false;
 }
